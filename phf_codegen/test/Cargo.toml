@@ -16,7 +16,7 @@ unicase = "2.8.1"
 
 [build-dependencies]
 phf_codegen = { version = "^0.14.0", path = "..", features = ["quote"] }
-proc-macro2 = "1"
+proc-macro2 = "1.0.107"
 quote = "1"
 unicase = "2.8.1"
 uncased = { version = "0.9.7", default-features = false }
