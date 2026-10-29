@@ -1,0 +1,22 @@
+[package]
+name = "phf_codegen_test"
+authors = ["Steven Fackler <sfackler@gmail.com>"]
+version = "0.0.0"
+build = "build.rs"
+edition = "2024"
+publish = false
+
+[features]
+ptrhash = ["phf/ptrhash", "phf_codegen/ptrhash"]
+
+[dependencies]
+phf = { version = "^0.14.0", features = ["uncased", "unicase"] }
+uncased = { version = "0.9.7", default-features = false }
+unicase = "2.8.1"
+
+[build-dependencies]
+phf_codegen = { version = "^0.14.0", path = "..", features = ["quote"] }
+proc-macro2 = "1"
+quote = "1"
+unicase = "2.8.1"
+uncased = { version = "0.9.7", default-features = false }

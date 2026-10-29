@@ -1,0 +1,279 @@
+#[cfg(test)]
+mod test {
+    use uncased::UncasedStr;
+    use unicase::{Ascii, UniCase};
+
+    include!(concat!(env!("OUT_DIR"), "/codegen.rs"));
+
+    #[test]
+    fn singleton_iteration() {
+        assert_eq!(SINGLETON_MAP.len(), 1);
+        assert_eq!(SINGLETON_MAP.get("a"), Some(&1));
+        assert_eq!(SINGLETON_MAP.get("missing"), None);
+        assert_eq!(SINGLETON_MAP.entries().len(), 1);
+        assert_eq!(SINGLETON_MAP.entries().collect::<Vec<_>>(), [(&"a", &1)]);
+        assert_eq!(
+            SINGLETON_MAP.entries().rev().collect::<Vec<_>>(),
+            [(&"a", &1)]
+        );
+        assert_eq!(SINGLETON_SET.len(), 1);
+        assert_eq!(SINGLETON_SET.iter().collect::<Vec<_>>(), [&"a"]);
+        assert_eq!(SINGLETON_SET.iter().rev().collect::<Vec<_>>(), [&"a"]);
+    }
+
+    #[test]
+    fn map() {
+        assert_eq!("a", MAP[&1]);
+        assert_eq!("b", MAP[&2]);
+        assert_eq!("c", MAP[&3]);
+        assert!(!MAP.contains_key(&100));
+        let mut entries = MAP.entries().collect::<Vec<_>>();
+        entries.sort();
+        assert_eq!(entries, [(&1, &"a"), (&2, &"b"), (&3, &"c")]);
+    }
+
+    #[test]
+    fn set() {
+        assert!(SET.contains(&1));
+        assert!(SET.contains(&2));
+        assert!(SET.contains(&3));
+        assert!(!SET.contains(&4));
+        let mut entries = SET.iter().copied().collect::<Vec<_>>();
+        entries.sort();
+        assert_eq!(entries, [1, 2, 3]);
+    }
+
+    #[test]
+    fn ordered_map() {
+        assert_eq!("a", ORDERED_MAP[&1]);
+        assert_eq!("b", ORDERED_MAP[&2]);
+        assert_eq!("c", ORDERED_MAP[&3]);
+        assert!(!ORDERED_MAP.contains_key(&100));
+        assert_eq!(
+            &["a", "b", "c"][..],
+            &ORDERED_MAP.values().cloned().collect::<Vec<_>>()[..]
+        );
+    }
+
+    #[test]
+    fn ordered_set() {
+        assert!(ORDERED_SET.contains(&1));
+        assert!(ORDERED_SET.contains(&2));
+        assert!(ORDERED_SET.contains(&3));
+        assert!(!ORDERED_SET.contains(&4));
+        assert_eq!(
+            &[1, 2, 3][..],
+            &ORDERED_SET.iter().cloned().collect::<Vec<_>>()[..]
+        );
+    }
+
+    #[test]
+    fn str_keys() {
+        assert_eq!(1, STR_KEYS["a"]);
+        assert_eq!(2, STR_KEYS["b"]);
+        assert_eq!(3, STR_KEYS["c"]);
+    }
+
+    #[test]
+    fn unicase_map() {
+        assert_eq!("a", UNICASE_MAP[&UniCase::new("AbC")]);
+        assert_eq!("a", UNICASE_MAP[&UniCase::new("abc")]);
+        assert_eq!("b", UNICASE_MAP[&UniCase::new("DEf")]);
+        assert!(!UNICASE_MAP.contains_key(&UniCase::new("XyZ")));
+
+        // allow lookup with non-static slices
+        let local_str_1 = "AbC".to_string();
+        let local_str_2 = "abc".to_string();
+        let local_str_3 = "DEf".to_string();
+        assert_eq!("a", UNICASE_MAP[&UniCase::new(&*local_str_1)]);
+        assert_eq!("a", UNICASE_MAP[&UniCase::new(&*local_str_2)]);
+        assert_eq!("b", UNICASE_MAP[&UniCase::new(&*local_str_3)]);
+    }
+
+    #[test]
+    fn unicase_ascii_map() {
+        assert_eq!("a", UNICASE_ASCII_MAP[&Ascii::new("AbC")]);
+        assert_eq!("a", UNICASE_ASCII_MAP[&Ascii::new("abc")]);
+        assert_eq!("b", UNICASE_ASCII_MAP[&Ascii::new("DEf")]);
+        assert!(!UNICASE_ASCII_MAP.contains_key(&Ascii::new("XyZ")));
+
+        // allow lookup with non-static slices
+        let local_str_1 = "AbC".to_string();
+        let local_str_2 = "abc".to_string();
+        let local_str_3 = "DEf".to_string();
+        assert_eq!("a", UNICASE_ASCII_MAP[&Ascii::new(&*local_str_1)]);
+        assert_eq!("a", UNICASE_ASCII_MAP[&Ascii::new(&*local_str_2)]);
+        assert_eq!("b", UNICASE_ASCII_MAP[&Ascii::new(&*local_str_3)]);
+    }
+
+    #[test]
+    fn uncased_map() {
+        assert_eq!("a", UNCASED_MAP[UncasedStr::new("AbC")]);
+        assert_eq!("a", UNCASED_MAP[UncasedStr::new("abc")]);
+        assert_eq!("b", UNCASED_MAP[UncasedStr::new("DEf")]);
+        assert!(!UNCASED_MAP.contains_key(UncasedStr::new("XyZ")));
+    }
+
+    #[test]
+    fn array_keys() {
+        assert_eq!(0, ARRAY_KEYS[b"foo"]);
+        assert_eq!(1, ARRAY_KEYS[b"bar"]);
+        assert_eq!(2, ARRAY_KEYS[b"baz"]);
+    }
+
+    #[test]
+    fn byte_str_keys() {
+        // slicing is required unless the key type is fixed-size
+        assert_eq!(0, BYTE_STR_KEYS[&b"foo"[..]]);
+        assert_eq!(1, BYTE_STR_KEYS[&b"bar"[..]]);
+        assert_eq!(2, BYTE_STR_KEYS[&b"baz"[..]]);
+        assert_eq!(3, BYTE_STR_KEYS[&b"quux"[..]]);
+    }
+
+    #[test]
+    fn byte_vec_keys() {
+        assert_eq!(0, BYTE_VEC_KEYS[&b"foo"[..]]);
+        assert_eq!(1, BYTE_VEC_KEYS[&b"bar"[..]]);
+        assert_eq!(2, BYTE_VEC_KEYS[&b"baz"[..]]);
+    }
+
+    #[test]
+    fn u32_vec_keys() {
+        assert_eq!("a", U32_VEC_KEYS[&[1u32, 2, 3][..]]);
+        assert_eq!("b", U32_VEC_KEYS[&[4u32, 5, 6][..]]);
+        assert_eq!("c", U32_VEC_KEYS[&[7u32, 8, 9][..]]);
+        assert!(!U32_VEC_KEYS.contains_key(&[10u32, 11, 12][..]));
+    }
+
+    #[test]
+    fn u32_vec_set() {
+        assert!(U32_VEC_SET.contains(&[1u32, 2, 3][..]));
+        assert!(U32_VEC_SET.contains(&[4u32, 5, 6][..]));
+        assert!(U32_VEC_SET.contains(&[7u32, 8, 9][..]));
+        assert!(!U32_VEC_SET.contains(&[10u32, 11, 12][..]));
+    }
+
+    #[test]
+    fn u32_vec_ordered_map() {
+        assert_eq!("a", U32_VEC_ORDERED_MAP[&[1u32, 2, 3][..]]);
+        assert_eq!("b", U32_VEC_ORDERED_MAP[&[4u32, 5, 6][..]]);
+        assert_eq!("c", U32_VEC_ORDERED_MAP[&[7u32, 8, 9][..]]);
+        assert_eq!(
+            &[&[1u32, 2, 3][..], &[4u32, 5, 6][..], &[7u32, 8, 9][..]],
+            &U32_VEC_ORDERED_MAP.keys().copied().collect::<Vec<_>>()[..]
+        );
+    }
+
+    #[test]
+    fn u32_vec_ordered_set() {
+        assert!(U32_VEC_ORDERED_SET.contains(&[1u32, 2, 3][..]));
+        assert!(U32_VEC_ORDERED_SET.contains(&[4u32, 5, 6][..]));
+        assert!(U32_VEC_ORDERED_SET.contains(&[7u32, 8, 9][..]));
+        assert_eq!(
+            &[&[1u32, 2, 3][..], &[4u32, 5, 6][..], &[7u32, 8, 9][..]],
+            &U32_VEC_ORDERED_SET.iter().copied().collect::<Vec<_>>()[..]
+        );
+    }
+
+    #[test]
+    fn empty_map() {
+        assert_eq!(None, EMPTY.get(&1));
+    }
+
+    #[test]
+    fn empty_ordered_map() {
+        assert_eq!(None, EMPTY_ORDERED.get(&1));
+    }
+
+    #[test]
+    fn from_iter_map() {
+        assert_eq!(1, FROM_ITER_MAP["one"]);
+        assert_eq!(2, FROM_ITER_MAP["two"]);
+        assert_eq!(3, FROM_ITER_MAP["three"]);
+        assert!(!FROM_ITER_MAP.contains_key("four"));
+    }
+
+    #[test]
+    fn tuple_map() {
+        assert_eq!("first", TUPLE_MAP[&(1u32, "a")]);
+        assert_eq!("second", TUPLE_MAP[&(2u32, "b")]);
+        assert_eq!("third", TUPLE_MAP[&(3u32, "c")]);
+        assert!(!TUPLE_MAP.contains_key(&(4u32, "d")));
+        assert!(!TUPLE_MAP.contains_key(&(1u32, "b")));
+
+        let key = String::from("a");
+        assert_eq!(Some(&"first"), TUPLE_MAP.get(&(1u32, key.as_str())));
+    }
+
+    #[test]
+    fn tuple_set() {
+        assert!(TUPLE_SET.contains(&(1u32, "x")));
+        assert!(TUPLE_SET.contains(&(2u32, "y")));
+        assert!(TUPLE_SET.contains(&(3u32, "z")));
+        assert!(!TUPLE_SET.contains(&(4u32, "w")));
+        assert!(!TUPLE_SET.contains(&(1u32, "y")));
+
+        let key = String::from("x");
+        assert!(TUPLE_SET.contains(&(1u32, key.as_str())));
+    }
+
+    #[test]
+    fn ordered_tuple_map() {
+        assert_eq!("first", ORDERED_TUPLE_MAP[&(1u32, "a")]);
+        assert_eq!("second", ORDERED_TUPLE_MAP[&(2u32, "b")]);
+        assert_eq!("third", ORDERED_TUPLE_MAP[&(3u32, "c")]);
+        assert!(!ORDERED_TUPLE_MAP.contains_key(&(4u32, "d")));
+        assert!(!ORDERED_TUPLE_MAP.contains_key(&(1u32, "b")));
+
+        let key = String::from("a");
+        assert_eq!(Some(&"first"), ORDERED_TUPLE_MAP.get(&(1u32, key.as_str())));
+    }
+
+    #[test]
+    fn ordered_tuple_set() {
+        assert!(ORDERED_TUPLE_SET.contains(&(1u32, "x")));
+        assert!(ORDERED_TUPLE_SET.contains(&(2u32, "y")));
+        assert!(ORDERED_TUPLE_SET.contains(&(3u32, "z")));
+        assert!(!ORDERED_TUPLE_SET.contains(&(4u32, "w")));
+        assert!(!ORDERED_TUPLE_SET.contains(&(1u32, "y")));
+
+        let key = String::from("x");
+        assert!(ORDERED_TUPLE_SET.contains(&(1u32, key.as_str())));
+    }
+
+    #[test]
+    fn nested_tuple_map() {
+        assert_eq!(10, NESTED_TUPLE_MAP[&((1u32, 2u32), "nested")]);
+        assert_eq!(20, NESTED_TUPLE_MAP[&((3u32, 4u32), "tuple")]);
+        assert_eq!(30, NESTED_TUPLE_MAP[&((5u32, 6u32), "keys")]);
+        assert!(!NESTED_TUPLE_MAP.contains_key(&((7u32, 8u32), "missing")));
+        assert!(!NESTED_TUPLE_MAP.contains_key(&((1u32, 2u32), "wrong")));
+    }
+
+    #[test]
+    fn mixed_tuple_map() {
+        assert_eq!("value1", MIXED_TUPLE_MAP[&(true, 1u8, "test")]);
+        assert_eq!("value2", MIXED_TUPLE_MAP[&(false, 2u8, "demo")]);
+        assert_eq!("value3", MIXED_TUPLE_MAP[&(true, 3u8, "example")]);
+        assert!(!MIXED_TUPLE_MAP.contains_key(&(false, 1u8, "test")));
+        assert!(!MIXED_TUPLE_MAP.contains_key(&(true, 4u8, "missing")));
+    }
+
+    #[test]
+    fn quote_token_interop() {
+        assert_eq!("a", TO_TOKEN_STREAM_MAP[&1]);
+        assert_eq!("b", TO_TOKEN_STREAM_MAP[&2]);
+        assert_eq!("c", TO_TOKEN_STREAM_MAP[&3]);
+        assert!(QUOTED_SET.contains(&1));
+        assert!(QUOTED_SET.contains(&2));
+        assert!(QUOTED_SET.contains(&3));
+        assert_eq!(
+            &["a", "b", "c"][..],
+            &QUOTED_ORDERED_MAP.values().cloned().collect::<Vec<_>>()[..]
+        );
+        assert_eq!(
+            &[1, 2, 3][..],
+            &QUOTED_ORDERED_SET.iter().cloned().collect::<Vec<_>>()[..]
+        );
+    }
+}

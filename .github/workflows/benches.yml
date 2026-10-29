@@ -1,0 +1,35 @@
+name: Bench
+on:
+  pull_request:
+    types: [labeled]
+
+permissions:
+  deployments: write
+  contents: write
+
+jobs:
+  bench_between_main_and_pr:
+    if: ${{ github.event.label.name == 'run-benchmarks' }}
+    name: Bench
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup nightly toolchain
+        run: |
+          rustup set profile minimal
+          rustup override set nightly
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run benchmark on PR
+        run: cargo bench | tee output.txt
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
+        with:
+          tool: 'cargo'
+          output-file-path: output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          comment-always: true
+          comment-on-alert: true
+          alert-threshold: '150%'
+          fail-on-alert: true

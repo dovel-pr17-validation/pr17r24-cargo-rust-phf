@@ -1,0 +1,91 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: zizmor
+    permissions:
+      actions: read
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@53290badfa369cb0bf7ad16342cb62c2fa47ac7b # v0.8.0
+        with:
+          advanced-security: false
+          annotations: true
+          version: 1.31.1
+
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # MSRV and nightly
+        version: [1.85.0, stable, nightly]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set toolchain
+        run: |
+          rustup set profile minimal
+          rustup override set ${{ matrix.version }}
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+
+      - name: Rustfmt check
+        if: matrix.version == '1.85.0'
+        run: |
+          rustup component add rustfmt
+          cargo fmt --all -- --check
+
+      - name: Run `cargo test` on workspace
+        if: matrix.version != '1.85.0'
+        run: cargo test --workspace --exclude=phf_codegen_test --exclude=phf_macros_no_macros_test
+
+      - name: phf_macros test without phf/macros
+        if: matrix.version != '1.85.0'
+        run: cargo test -p phf_macros_no_macros_test
+
+      - name: phf_macros ptrhash test without phf/macros
+        if: matrix.version != '1.85.0'
+        run: cargo test -p phf_macros_no_macros_test --features ptrhash
+
+      - name: phf_codegen test
+        if: matrix.version != '1.85.0'
+        run: cargo test -p phf_codegen_test
+
+      - name: trybuild test
+        if: matrix.version == 'stable'
+        run: cargo test -p phf_macros_test -- --ignored
+
+      - name: no_std build check
+        working-directory: phf
+        run: cargo build --no-default-features
+
+      - name: all features check
+        run: cargo check --workspace --all-features
+
+      - name: ptrhash tests
+        if: matrix.version != '1.85.0'
+        run: cargo test -p phf_generator -p phf_macros_test -p phf_codegen_test --features ptrhash
+
+      - name: unicase + macros features check
+        run: cargo check -p unicase-example
+
+      - name: deny check
+        if: matrix.version == 'stable'
+        uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1

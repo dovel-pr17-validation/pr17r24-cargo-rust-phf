@@ -1,0 +1,33 @@
+error: key type does not match the first key
+ --> tests/compile-fail/mixed.rs:8:5
+  |
+8 |     UniCase::ascii("FOO") => 1,
+  |     ^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `UniCase<&str>: PhfEq<_>` is not satisfied
+  --> tests/compile-fail/mixed.rs:12:18
+   |
+12 |     KEYWORDS.get("foo").unwrap();
+   |              --- ^^^^^ the trait `phf_shared::PhfBorrow<_>` is not implemented for `UniCase<&str>`
+   |              |
+   |              required by a bound introduced by this call
+   |
+   = help: the following other types implement trait `phf_shared::PhfBorrow<B>`:
+             `&[T; N]` implements `phf_shared::PhfBorrow<[T; N]>`
+             `&[T]` implements `phf_shared::PhfBorrow<[T]>`
+             `&str` implements `phf_shared::PhfBorrow<str>`
+             `Arc<[T]>` implements `phf_shared::PhfBorrow<[T]>`
+             `Arc<str>` implements `phf_shared::PhfBorrow<str>`
+             `Box<[T]>` implements `phf_shared::PhfBorrow<[T]>`
+             `Box<str>` implements `phf_shared::PhfBorrow<str>`
+             `Rc<[T]>` implements `phf_shared::PhfBorrow<[T]>`
+           and $N others
+   = note: required for `UniCase<&str>` to implement `PhfEq<_>`
+note: required by a bound in `phf::Map::<K, V>::get`
+  --> $WORKSPACE/phf/src/map.rs
+   |
+   |     pub fn get<T>(&self, key: &T) -> Option<&V>
+   |            --- required by a bound in this associated function
+...
+   |         K: PhfEq<T>,
+   |            ^^^^^^^^ required by this bound in `Map::<K, V>::get`
