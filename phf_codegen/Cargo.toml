@@ -17,5 +17,5 @@ quote = ["dep:proc-macro2", "dep:quote"]
 [dependencies]
 phf_generator = "0.14.0"
 phf_shared = "0.14.0"
-proc-macro2 = { version = "1", optional = true }
+proc-macro2 = { version = "1.0.107", optional = true }
 quote = { version = "1", optional = true }
