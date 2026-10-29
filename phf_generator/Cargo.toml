@@ -14,7 +14,7 @@ readme = "README.md"
 ptrhash = ["phf_shared/ptrhash"]
 
 [dependencies]
-fastrand = { version = "2.1.0", default-features = false }
+fastrand = { version = "2.5.0", default-features = false }
 phf_shared = { version = "^0.14.0", default-features = false }
 
 [dev-dependencies]
